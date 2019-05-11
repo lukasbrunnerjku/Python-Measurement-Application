@@ -137,6 +137,7 @@ sb = SettingsBox(root, labels)
 sb.pack()
 
 images = [
+"my_format.png"
 "csv_wo_header.png",
 "csv_w_header.png"
 ]
