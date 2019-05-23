@@ -321,9 +321,11 @@ class MeasurementPage(Frame):
 
         # now settings is a dict with the port names as values and
         # keys like: Eurotherm2416 port -> Instrument name in key!
+        # note: here we can have empty entries too, but we will handle that
         settings = self.settingsbox2.get_settings()
         # if no settings were applied than use default port settings of the
-        # Instrument's __init__ methods!
+        # Instrument's __init__ methods! but if there is a settings dictionary
+        # then delete the empty entries:
         if settings != None:
             settings = delete_empty_dict_entries(settings)
 
@@ -333,10 +335,29 @@ class MeasurementPage(Frame):
             # create objects of instruments using settings from the settingsbox2,
             # the initialization of the instruments happens on the __init__ call
             try:
-                temp = cls()
+                # use default port settings if the dictionary hasn't the
+                # given key in it (that's the case if the entry was left empty):
+                if cls.has_port_settings() and settings != None:
+                    temp = cls(port=settings.get(cls.__name__ + " port", None))
+                else:
+                    # this is used for Instrument classes where it makes no sense
+                    # to use port settings, e.g. the Keithley2000 is connected over
+                    # GPIB and it is the only Instrument with GPIB so it simply searches
+                    # for an Ni Visa resource with GPIB in it
+                    temp = cls()
             except Exception as e:
+                hint = ("Hint: If a resource is blocked press the stop measurement" +
+                " button to free the resource and then go for the initialization again!" +
+                " That's the case if a PermissionError is raised!")
                 messagebox.showerror("Instrument initialization error!",
-                                     "Error message:\n{}".format(e))
+                                     "Error message:\n{}\n\n{}".format(e, hint))
+                # if an Instrument will raise an error here may there are other
+                # Instruments which were successfully created and the connection
+                # established, so in such case we want to enable the stop button
+                # then we can easily fix the original problem and press the stop
+                # measurement button to free all resources and then we can go
+                # for a new initialization!
+                self.stop_btn.config(state=NORMAL)
                 return
 
             # and then append the instrument objects to the instruments list:

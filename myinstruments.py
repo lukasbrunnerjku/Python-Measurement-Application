@@ -43,8 +43,10 @@ class Instrument():
 
 class Eurotherm2416(minimalmodbus.Instrument, Instrument):
 
-    def __init__(self, port="COM7", baudrate=9600):
-
+    def __init__(self, port=None, baudrate=9600):
+        # if no port specified use the default port:
+        if port == None:
+            port = "COM7"
         # we will open a serial port inside the minimalmodbus.Instrument __init__
         # with the baudrate constant of the module so we need to set this:
         minimalmodbus.BAUDRATE = baudrate
@@ -105,8 +107,10 @@ class FMI220(Instrument):
     AA ... set current force value to null point
     BA ... one shot force measurement
     """
-    def __init__(self, port="COM6", baudrate=9600, timeout=0.5):
-
+    def __init__(self, port=None, baudrate=9600, timeout=0.5):
+        # if no port specified use the default port:
+        if port == None:
+            port = "COM6"
         self.serial = serial.Serial(port=port,
                                     baudrate=baudrate,
                                     timeout=timeout,

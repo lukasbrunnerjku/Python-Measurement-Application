@@ -19,6 +19,9 @@ style.use("ggplot")
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
                                                NavigationToolbar2Tk)
 
+# to create the time information for the header in the Container widget:
+import time
+
 
 class Graph():
     """An abstract Graph class for all custom Graph classes to inherite from!"""
