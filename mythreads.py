@@ -12,13 +12,14 @@ import random
 from myevent import Event
 
 
-# FIFO ... First In First Out
-# in such a buffer the threads will temporaly store the data
-# the access is synchronized wich is needed when multiple threads accessing it
-# with acquire() and release() we ensure that only one thread at a time
-# can access the fifo buffer -> no data corruption possible:
-class Fifo:
 
+class Fifo:
+    """FIFO ... First In First Out buffer
+    in such a buffer the threads will temporaly store the data
+    the access is synchronized wich is needed when multiple threads accessing it
+    with Lock.acquire() and Lock.release() used internally we ensure that only
+    one thread at a time can access the fifo buffer -> no data corruption possible
+    """
     def __init__(self):
         self.data = []
         # self.lock = threading.Lock()
@@ -62,105 +63,6 @@ class Fifo:
     def pop(self) -> object:
         return self.synchronized_access(self._pop)
 
-# --- start of test code ---
-"""
-The following DrawingThread isn't working because matplotlib isn't thread safe
-and the DrawingProcess isn't working because the graph object must be created
-inside the Process (tkinter objects can't be parameters of a process! -> pickle error
-because processes don't share memory with the main process we run the other code in...
-so there will be sent an copy of the objects e.g. the graph and interval object
-to the DrawingProcess! This objects need to be serialized to be sent and that's
-not possible for tkinter objects!
---> so the graph needs to be created inside the process
---> therefore we can't integrate a automatically updating graph feature in this
-application like that!
-"""
-# basic drawing functionality with drawing method we will call every interval
-# seconds the update method of the given Graph object!
-class BasicDrawing():
-
-    def __init__(self, graph, interval):
-        self.graph = graph
-        self.interval = interval
-        self.flag = True
-
-    def drawing(self):
-        print("Starting the drawing...")
-        while self.flag:
-            start = time.time()
-
-            # do the drawing of fresh data here with the graph object:
-            print("Updating the Graph object...")
-            self.graph.update()
-
-            dur = time.time() - start
-            if dur < self.interval:
-                time.sleep(self.interval - dur)
-        print("Drawing has stopped!")
-
-    def stop(self):
-        self.flag = False
-
-# we inherite from the Thread class and the BasicDrawing class to keep our code DRY
-class DrawingThread(threading.Thread, BasicDrawing):
-
-    def __init__(self, graph, interval):
-        threading.Thread.__init__(self)
-        BasicDrawing.__init__(graph, interval)
-
-    def run(self):
-        self.drawing()
-
-# we inherite from the Process class and the BasicDrawing class to keep our code DRY
-class DrawingProcess(multiprocessing.Process, BasicDrawing):
-
-    def __init__(self, graph, interval):
-        multiprocessing.Process.__init__(self)
-        BasicDrawing.__init__(graph, interval)
-
-    def run(self):
-        self.drawing()
-
-# only used to get fake instrument data with thread into the buffer as it will
-# be the case in the real measurement application:
-# (note: this is for test purpose only)
-class FakeDataThread(threading.Thread):
-
-    def __init__(self, fifo, count, interval):
-        threading.Thread.__init__(self)
-        self.fifo = fifo
-        self.interval = interval
-        self.count = count
-        self.flag = True
-        self.start_time = None
-
-    def run(self):
-        self.start_time = time.time()
-
-        while self.count > 0 and self.flag:
-            bundle = []
-            self.count -= 1
-            start = time.time()
-
-            # here we simulate the measurement of 4 values,
-            # time and 3 instrument values
-            time.sleep(0.1)
-            bundle.append(time.time() - self.start_time)
-            for i in range(0, 3):
-                bundle.append(random.random())
-
-            # store the fake data on the fifo buffer:
-            self.fifo.push(bundle)
-
-            dur = time.time() - start
-            if dur < self.interval:
-                time.sleep(self.interval - dur)
-
-    def stop(self):
-        print("Fake data production has stopped!")
-        self.flag = False
-
-# --- end of test code ---
 
 class MeasurementThread(threading.Thread):
 
@@ -242,7 +144,7 @@ class MeasurementThread(threading.Thread):
             print("{} needed {}s to execute measurement succesfuly!".format(self, dur))
             if dur < self.interval:
                 time.sleep(self.interval - dur)
-                
+
         # if stop button pressed we will come to this point, where the thread
         # really has stopped!
         print(self, "has stopped!")

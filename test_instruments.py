@@ -1,3 +1,5 @@
+# --- module for testing instrument classes ---
+
 from myinstruments import *
 import time
 

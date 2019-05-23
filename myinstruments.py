@@ -5,16 +5,15 @@ import visa
 
 
 # --- abstract class which we want all innstrument classes to inherite ---
-
-# Every instrument must inherite from the Instrument class and therefore must
-# implement:
-# -> the measure method
-# -> the open method
-# -> the close method
-# -> the get_y_label method
-# ...or a NotImplementedError is raised!
 class Instrument():
-
+    """Every instrument must inherite from the Instrument class and therefore must
+    implement:
+    -> the measure method
+    -> the open method
+    -> the close method
+    -> the get_y_label method
+    ...or a NotImplementedError is raised if the app will call one of those methods!
+    """
     # of cause we want the Instrument to measure something!
     def measure(self) -> float:
         raise NotImplementedError("No method: measure() implemented on", self.__class__.__name__)
@@ -26,6 +25,13 @@ class Instrument():
 
     def close(self):
         raise NotImplementedError("No method: close() implemented on", self.__class__.__name__)
+
+    # a class method that tells the MeasurementPage
+    # whether we can set the port settings in the GUI or not!
+    # override this method so that it returns True if port settings make sense
+    # for the Instrument
+    def has_port_settings():
+        return False
 
     # this is used for labeling the axis(and legend) when plotting the data measured with measure!
     # note: this is a class function!
@@ -52,6 +58,9 @@ class Eurotherm2416(minimalmodbus.Instrument, Instrument):
         print(self)
         print("Finished", self.__class__.__name__, "initialization...")
 
+    def has_port_settings():
+        return True
+
     def open(self):
         print("Opening connection of:", self.__class__.__name__, "again...")
         # in minimalmodbus.Instrument.__init__(self, port, 1) we create a Serial object:
@@ -71,7 +80,6 @@ class Eurotherm2416(minimalmodbus.Instrument, Instrument):
             print("Connection of instrument:", self.__class__.__name__, " has been closed!")
         else:
             raise IOError("Failed to close connection of instrument:", self.__class__.__name__)
-
 
     def measure(self) -> float:
         # arguments of read_register() method:
@@ -97,7 +105,6 @@ class FMI220(Instrument):
     AA ... set current force value to null point
     BA ... one shot force measurement
     """
-
     def __init__(self, port="COM6", baudrate=9600, timeout=0.5):
 
         self.serial = serial.Serial(port=port,
@@ -115,6 +122,9 @@ class FMI220(Instrument):
         self.query("AG")
         self.query("AA")
         print("Finished FMI220 initialization...")
+
+    def has_port_settings():
+        return True
 
     def open(self):
         print("Opening connection of:", self.__class__.__name__, "again...")

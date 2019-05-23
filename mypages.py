@@ -1,188 +1,26 @@
+# --- module for custom pages ---
+
 # general imports:
 from tkinter import *
+from mywidgets import *
 
-# for the graph page:
-import multiprocessing
-import matplotlib
-matplotlib.use('TkAgg')
-from matplotlib.figure import Figure
-from matplotlib import style
-style.use("ggplot")
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
-                                               NavigationToolbar2Tk)
+# for general utility functions:
+from myutils import *
 
 # for the measurement page:
+import multiprocessing
 from tkinter import messagebox
 from myinstruments import *
 from mythreads import *
-import time
-import threading
-# for retrieving all the classes of the myinstruments modul:
+# for retrieving all the classes of the myinstruments module:
 import sys, inspect
 
-# --- custom frames ---
 
 class GraphPage(Frame):
     """
     A GraphPage which supports up to 3 y-Axes that share the same x-Axis (Time)
+    using the FancyGraph widget!
     """
-
-    # an abstract Graph class for all custom Graph classes to inherite from:
-    class Graph():
-
-        def update(self):
-            raise NotImplementedError("No method: update() implemented on", self.__class__.__name__)
-
-        def clear(self):
-            raise NotImplementedError("No method: clear() implemented on", self.__class__.__name__)
-
-    # e.g. this is the Graph class for the DrawingProcess:
-    class FancyGraph(Graph):
-
-        def __init__(self, frame, buffer, title, x_label, class_info):
-            # contains the information what Instruments are selected in the MeasurementPage:
-            self.class_info = class_info
-            # a frame in which we want to have a graph with
-            # update and clear functionality:
-            self.frame = frame
-            # the fifo buffer from which we get data:
-            self.buffer = buffer
-            # set up the graph:
-            self.figure = Figure(figsize=(6,5), dpi=100)
-            # some text to display on the graph:
-            self.title = title
-            self.x_label = x_label
-            # will be filled later in setup_axes:
-            self.y_labels, self.y_legend_labels, self.axes = [], [], []
-            # pre defined styles so that the data points are visually destinguishable,
-            # see the matplotlib docs to create your own styles for the axes:
-            self.styles = [
-            ("red", "r+-"),
-            ("blue", "bx-"),
-            ("green", "go-")
-            ]
-            # if we want to draw a line between the points we need to know the previous point:
-            self.prev_data = None
-
-            # set the axes up with all the properties defined above:
-            self.setup_axes()
-
-            self.canvas = FigureCanvasTkAgg(self.figure, master=self.frame)
-            self.canvas.draw()
-            self.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
-            toolbar = NavigationToolbar2Tk(self.canvas, self.frame)
-            toolbar.update()
-
-        def make_patch_spines_invisible(self, ax):
-            ax.set_frame_on(True)
-            ax.patch.set_visible(False)
-            for sp in ax.spines.values():
-                sp.set_visible(False)
-
-        def setup_axes(self):
-            # we need at least one axe to plot our data:
-            axe = self.figure.add_subplot(111)
-            axe.set_title(self.title)
-            axe.set_xlabel(self.x_label)
-            self.axes.append(axe)
-
-            # get all the labels acording to the Instruments selected in the MeasurementPage:
-            # (renews the y_labels and the y_legend_labels)
-            self.renew_labels()
-
-            # now add the other axes which should all share the same x axis:
-            # (range: start index inclusive, end index exclusive)
-            # e.g.: you want to have 3 axes so you have 3 labels: index _ = 1 then 2 then stop
-            for _ in range(1, len(self.y_labels)):
-                self.axes.append(axe.twinx())
-
-            lines = []
-            axe_nr = 0
-
-            for axe, y_label, style, y_legend_label in zip(self.axes,
-                                                           self.y_labels,
-                                                           self.styles,
-                                                           self.y_legend_labels):
-                axe_nr += 1
-                color, format = style
-                # to name the axis and give it a color
-                axe.set_ylabel(y_label, color=color)
-                # this will disable the use of an offset or scientific notation:
-                axe.ticklabel_format(useOffset=False, style='plain')
-                # remove the grid lines
-                axe.grid(b=False)
-                # set the graph up with no data and the legend labels:
-                # (plot returns a -> list <- of line objects)
-                line, = axe.plot([], [], format, label=y_legend_label)
-                lines.append(line)
-                # if we have already set up 2 axes then for the third axis we need
-                # to draw the spine on a different position or they will overlap:
-                if axe_nr == 3:
-                    # spine position for axes: first: 0, second: 1, thrid: 1.2
-                    # -> first and second get position implicitly, thrid and above would
-                    # be drawn over the previously drawn axes
-                    axe.spines["right"].set_position(("axes", 1.2))
-                    self.make_patch_spines_invisible(axe)
-                    axe.spines["right"].set_visible(True)
-                    self.figure.subplots_adjust(right=0.75)
-            # show a legend with the labels specified in plot(...)
-            # must be called on the host axis:
-            axe.legend(lines, self.y_legend_labels, loc="upper left")
-
-        def update(self):
-            # instr1, instr2 ... measured data from each instrument,
-            # the buffer data looks like: [[time, instr1, instr2,...], [...], ...]
-            while self.buffer.has_item():
-                data = self.buffer.pop()
-                print("Data:", data)
-                # the isntrument data starts at index 1 of data buffer:
-                index = 1
-                for axe, style in zip(self.axes, self.styles):
-                    # we don't need the color here just the format of the points:
-                    _, format = style
-                    # auto scale is normally enabled but if we want to move around
-                    # and zoom with the toolbar the autoscaling gets disabled and
-                    # then we won't see the new plotted data because it's off screen
-                    # with autoscale we will always see every data point on screen!
-                    axe.autoscale(enable=True, axis='both', tight=None)
-                    # if we have no previous data or we don't want to have a line,
-                    # else we will draw a line which is why we need previous data
-                    if self.prev_data == None or "-" not in format:
-                        axe.plot(data[0], data[index], format)
-                    else:
-                        axe.plot((self.prev_data[0], data[0]),
-                                 (self.prev_data[index], data[index]),
-                                 format)
-                    index += 1
-                self.prev_data = data
-            self.canvas.draw()
-
-        def clear(self):
-            # clear all the previously made axes:
-            for axe in self.axes:
-                axe.clear()
-            # setting things up again:
-            self.prev_data = None
-            # clear the axes list:
-            self.axes.clear()
-            # set the axe up acordingly using the y_labels and y_legend_labels:
-            self.setup_axes()
-            # needs to be called after every change that should be drawn:
-            self.canvas.draw()
-
-        def renew_labels(self):
-            # start with empty lists:
-            self.y_labels.clear()
-            self.y_legend_labels.clear()
-
-            # in class_info there are all Instrument classes we want to plot measured data from!
-            print("Classes used:", self.class_info)
-            for cls in self.class_info:
-                y_label, y_legend_label = cls.get_labels()
-                self.y_labels.append(y_label)
-                self.y_legend_labels.append(y_legend_label)
-
-
     def __init__(self, parent, buffer, class_info, title, *args, **kwargs):
 
         Frame.__init__(self, parent, *args, **kwargs)
@@ -207,7 +45,7 @@ class GraphPage(Frame):
 
         # a label with an important hint:
         self.hint = Label(master=self,
-                          text="After changing the Instruments press reset once before update!",
+                          text="After changing the Instruments press clear once before update, it will reset the graph accordingly!",
                           fg="red")
         # one button for the manual update:
         self.update_btn = Button(master=self, text="Update", command=self.update)
@@ -229,36 +67,27 @@ class GraphPage(Frame):
 
         # create a graph object:
         # params: frame, buffer, title, x_label, class_info
-        self.graph = GraphPage.FancyGraph(self,
-                                          self.buffer,
-                                          self.title,
-                                          self.x_label,
-                                          self.class_info)
+        self.graph = FancyGraph(self,
+                                self.buffer,
+                                self.title,
+                                self.x_label,
+                                self.class_info)
         self.update_btn.pack(side=LEFT)
         self.clear_btn.pack(side=LEFT)
         self.hint.pack(side=LEFT)
 
 class MeasurementPage(Frame):
-    """
-    A measurement page where one can select different Instruments from the
+    """A measurement page where one can select different Instruments from the
     myinstruments.py module (if an Instrument is added there it will automatically
     show that Instrument as available option in the Checkbuttons widget!)
 
     The Terminal widget takes care of the storing the data into an file and
     showing the data directly in the measurement page!
     """
-
-    def swap(list, old, new):
-        # swaps the old element of a list with the new element:
-        index = list.index(old)
-        list.remove(old)
-        list.insert(index, new)
-
-
-    # if a measurement of a thread fails multiple times we close the Instrument's
-    # connection and open it again!... then starting a new MeasurementThread!
     def error_routine(self, sender, earg):
-        """
+        """If a measurement of a thread fails multiple times we close the Instrument's
+        connection and open it again!... then starting a new MeasurementThread!
+
         If one thread has a problem to get data from an Instrument and calling
         the measure() method of that Instrument multiple times still doesn't work
         we restart the Instruments connection and let all the other threads go
@@ -305,7 +134,7 @@ class MeasurementPage(Frame):
         # but do that in synchronized way:
         self.threads_lock.acquire()
         print("Before:", self.threads)
-        MeasurementPage.swap(self.threads, old, new)
+        swap(self.threads, old, new)
         print("After:", self.threads)
 
         # before we start again, clear all the fifo buffers since the values
@@ -331,98 +160,12 @@ class MeasurementPage(Frame):
         print("Error handled, normal mode of operation restored!")
 
 
-
-    # abstract class for a Container object which should have the update method
-    # and should be able to create a header with time info about measurement:
-    class Container():
-
-        def update(self, msg):
-            raise NotImplementedError("No method: update() implemented on", self.__class__.__name__)
-
-        def create_header(self) -> str:
-            ftime = time.strftime("%d.%B.%Y - %H:%M:%S", time.localtime())
-            return "Starting new measurement at {}".format(ftime)
-
-    # create a terminal class which inherites from tkinter.Text class and
-    # from the abstract class Container which is the interface we
-    # need to pass an object as a container to the UpdateThread!
-    class Terminal(Text, Container):
-
-        def __init__(self, parent, filename, *args, **kwargs):
-            Text.__init__(self, parent, *args, **kwargs)
-            # filename in which the measured data will be safed:
-            self.filename = filename
-
-        def update(self, msg):
-            # save msg to file (append data if file already filled with content,
-            # or create file if no file with that name exists)
-            with open(self.filename, "a+") as f:
-                f.write(msg + "\n")
-            # show msg in the terminal:
-            self.insert(END, msg + "\n")
-            # for autoscrolling to the bottom position:
-            self.yview_moveto(1)
-
-    # a widget that holds a Checkbutton object for each Instrument class available
-    # in the myinstruments module:
-    class Checkbuttons(Frame):
-
-        def __init__(self, parent, classes, *args, **kwargs):
-            Frame.__init__(self, parent, *args, **kwargs)
-            self.classes = classes
-            self.vars = []
-            self.cbs = []
-            for cls in classes:
-                # for each instrument we need an Integer variable:
-                self.vars.append(IntVar())
-                self.cbs.append(Checkbutton(self, text=cls.__name__, variable=self.vars[-1]))
-
-        # this is used to get all the class objects in a list:
-        def get_selected_classes(self) -> list:
-            print("Selected buttons:", [var.get() for var in self.vars])
-            selection = []
-            for cls, var in zip(self.classes, self.vars):
-                # a selected button has a variable value of 1, 0 otherwise!
-                if var.get():
-                    # append class if selected:
-                    selection.append(cls)
-            # return a list of class objects of the selected classes:
-            return selection
-
-        def _packChildren(self):
-            # as we created the Checkbutton objects we said that the parent
-            # of our Checkbutton is self -> and self is the Checkbuttons object
-            # which is itself a tkinter Frame object!
-            # when we call pack() on the Checkbutton objects they will get
-            # packed inside the Checkbuttons Frame widget:
-            for cb in self.cbs:
-                cb.pack()
-
-        def pack(self, *args, **kwargs):
-            self._packChildren()
-            # after we pack the children (Checkbutton objects) we need to
-            # pack the Frame the children are inside too:
-            # (will be packed inside the parent widget, see constructor parameters)
-            Frame.pack(self, *args, **kwargs)
-
-        def grid(self, *args, **kwargs):
-            self._packChildren()
-            # see pack() method above... same aplies here but using other
-            # method to place the Checkbuttons Frame (which holds all the Checkbutton objects)
-            # inside the parent widget:
-            Frame.grid(self, *args, **kwargs)
-
-        class MyEntryBox(Frame):
-
-            def __init__(self, *args, **kwargs):
-                Frame.__init__(self, *args, **kwargs)
-
-
-
-    # the filename is used to create an file with that name for data saving or
-    # if such file does exist it appends any new data to it!
     def __init__(self, parent, buffer, class_info, filename, *args, **kwargs):
-
+        """The filename is used to create an file for data saving or
+        if such file does exist it appends any new data to it!
+        The buffer and class_info is used for communication between the
+        MeasurementPage and the GraphPage!
+        """
         Frame.__init__(self, parent, *args, **kwargs)
         # this is needed for drawing the right labels acording to the selected
         # Instruments on the MeasurementPage:
@@ -463,11 +206,26 @@ class MeasurementPage(Frame):
         print("All available Instruments are:")
         print(all_available_classes)
 
-        self.checkbuttons = MeasurementPage.Checkbuttons(self, all_available_classes)
-        self.checkbuttons.grid(row=2, column=0, columnspan=1, sticky=N+E+S+W)
+        measurement_labels = ["Interval", "Count", "Number of errors", "Fps"]
+        self.settingsbox1 = SettingsBox(self, measurement_labels, "Settings for the threads:")
+        self.settingsbox1.grid(row=2, column=1, columnspan=1, sticky=N+E+S+W)
+
+        # get the labels for all Instruments who have implemented the set_port method!
+        # for this Instruments it is possible to have different port names on different
+        # hardware, so we are able to set these parameters easly in the GUI
+        connection_labels = []
+        for cls in all_available_classes:
+            if cls.has_port_settings():
+                connection_labels.append(cls.__name__ + " port")
+
+        self.settingsbox2 = SettingsBox(self, connection_labels, "Settings of Instrument ports:")
+        self.settingsbox2.grid(row=3, column=1, columnspan=1, sticky=N+E+S+W)
+
+        self.checkbuttons = Checkbuttons(self, all_available_classes, bg="dark khaki")
+        self.checkbuttons.grid(row=2, column=0, columnspan=1, rowspan=2, sticky=N+E+S+W)
 
         self.apply_btn = Button(master=self, text="Apply", command=self.apply)
-        self.apply_btn.grid(row=3, column=0, columnspan=1, sticky=E+W)
+        self.apply_btn.grid(row=4, column=0, columnspan=1, sticky=E+W)
 
         # create all measurement widgets:
         self.init_btn = Button(master=self,
@@ -489,45 +247,100 @@ class MeasurementPage(Frame):
                                        text="Automated measurement",
                                        command=self.atomated_measurement,
                                        state=DISABLED)
-        self.auto_measure_btn.grid(row=1, column=1)
+        self.auto_measure_btn.grid(row=1, column=1, sticky=E+W)
 
         self.scrollbar = Scrollbar(self)
-        self.scrollbar.grid(row=2, column=4, sticky=N+S)
+        self.scrollbar.grid(row=2, column=4, rowspan=2, sticky=N+S)
 
-        self.terminal = MeasurementPage.Terminal(self,
-                                                 filename,
-                                                 yscrollcommand=self.scrollbar.set,
-                                                 width=80)
-        self.terminal.grid(row=2, column=3)
+        self.terminal = Terminal(self,
+                                 filename,
+                                 yscrollcommand=self.scrollbar.set,
+                                 width=80)
+        self.terminal.grid(row=2, column=3, rowspan=2)
         self.scrollbar.config(command=self.terminal.yview)
 
         self.stop_btn = Button(master=self,
                                text="Stop measurement",
                                command=self.stop,
                                state=DISABLED)
-        self.stop_btn.grid(row=3, column=3, sticky=W)
+        self.stop_btn.grid(row=4, column=3, sticky=W)
+
+        self.port_btn = Button(master=self,
+                               text="Open hadware manager under windows",
+                               command=open_hadware_manager,
+                               bg="saddle brown",
+                               fg="white")
+        self.port_btn.grid(row=4, column=1, sticky=W+E)
 
         self.terminal_label = Label(self, text="Measurement terminal")
         self.terminal_label.grid(row=1, column=3, sticky=N+E+S+W)
 
-    # parameters: doing <count> measurements every <interval> seconds
-    # noe ... number of errors that can occur before the error_routine is started
-    # fps ... frames per second we want the screen to try to update with new values
-    # (see mythreads module for further information)
     def init_measurement(self, interval=15, count=11520, noe=3, fps=2):
+        """Parameters: doing <count> measurements every <interval> seconds
+        noe ... number of errors that can occur before the error_routine is started
+        fps ... frames per second we want the screen to try to update with new values
+        (see mythreads module for further information)
+        """
         # reset the flag:
+        # (to signal the error routine if we need to start a new thread or not)
         self.stop_btn_pressed = False
         # an empty list is not an valid option:
         if not self.classes:
-            messagebox.showinfo("Select Instrument(s)", "Please select at least one Instrument!")
+            messagebox.showerror("No Instrument selected",
+                                 "Please select at least one Instrument!")
             return
+
+        # settings is a dictionary like:
+        # note: "Count" has an empty entry, we will handle that case too
+        # {"Interval": "1000", "Count": "", "Number of errors": "1", "Fps": "2"}
+        settings = self.settingsbox1.get_settings()
+
+        # if no settings were applied than use default settings
+        if settings != None:
+            settings = delete_empty_dict_entries(settings)
+
+            # use the values from method arguments above as default values if
+            # there is no dictionary entry with the given key
+            try:
+                interval = float(settings.get("Interval", interval))
+                count = float(settings.get("Count", count))
+                noe = int(settings.get("Number of errors", noe))
+                fps = int(settings.get("Fps", fps))
+            except Exception as e:
+                messagebox.showerror("Couldn't set the thread settings!",
+                                     "Error message:\n{}".format(e))
+                return
+
+        # in any case (thread settings set in GUI or not -> use default ones) show
+        # what thread settings will be used:
+        print("--- thread settings ---")
+        print("Interval:", interval,
+              "Count:", count,
+              "Number of errors:", noe,
+              "Fps:", fps)
+
+        # now settings is a dict with the port names as values and
+        # keys like: Eurotherm2416 port -> Instrument name in key!
+        settings = self.settingsbox2.get_settings()
+        # if no settings were applied than use default port settings of the
+        # Instrument's __init__ methods!
+        if settings != None:
+            settings = delete_empty_dict_entries(settings)
+
         # in the classes list are all class names of instruments we want to
         # create an object from:
         for cls in self.classes:
-            # create objects of instruments using default settings,
-            # the initialization of the instruments happens on the __init__ call,
+            # create objects of instruments using settings from the settingsbox2,
+            # the initialization of the instruments happens on the __init__ call
+            try:
+                temp = cls()
+            except Exception as e:
+                messagebox.showerror("Instrument initialization error!",
+                                     "Error message:\n{}".format(e))
+                return
+
             # and then append the instrument objects to the instruments list:
-            self.instruments.append(cls())
+            self.instruments.append(temp)
             # for each instrument we want to have a FIFO data buffer:
             self.fifos.append(Fifo())
             # and for each instrument we need a MeasurementThread:
@@ -561,6 +374,7 @@ class MeasurementPage(Frame):
         self.apply_btn.config(state=DISABLED)
 
     def apply(self):
+        """Uses the current Instrument selection for upcomming initialization!"""
         # clear the Instrument class list:
         self.classes.clear()
 
@@ -574,6 +388,12 @@ class MeasurementPage(Frame):
 
 
     def atomated_measurement(self):
+        """This method is used for doing measurements on certain timings and
+        for a certain number of times
+
+        --> on such measurement the error routine will get called if the
+        Instrument still can't measure successfully after multiple tries!
+        """
         # we don't want manualy measured data while doing atomatic measurements:
         self.measurement_btn.config(state=DISABLED)
         # and force the user to not press buttons when it makes no sense:
@@ -585,8 +405,11 @@ class MeasurementPage(Frame):
         for thread in self.threads:
             thread.start()
 
-    # this is used for doing measurements on each button click!
     def measurement(self):
+        """This method is used for doing measurements on each button click!
+
+        --> here no error routine is used, just restart manually!
+        """
         try:
             # if it's the first time we measured we need a reference time:
             if self.start_time == None:
@@ -614,6 +437,12 @@ class MeasurementPage(Frame):
             print(e)
 
     def stop(self):
+        """Stops the automated measurement manually and clears the Terminal screen,
+        asks if the data shown in the Terminal (which hasn't been plotted yet) will
+        be used for plotting --> if not the clear this "drawing buffer"
+
+        note: No data saved in the files will be deleted of course!
+        """
         # to ensure it wasn't a missclick:
         answer = messagebox.askquestion("Stop?", "Really want to stop measurement?")
         # if no -> return and do nothing
@@ -671,3 +500,14 @@ class MeasurementPage(Frame):
         # if no -> do nothing
         # then enable initialization button again:
         self.init_btn.config(state=NORMAL)
+
+class ParsingPage(Frame):
+    """A Page containing a ParsingBox widget for converting and saving a
+    measurement data files having the comfort of a GUI to select files, it
+    also contains an example image of how the output will be formatted!
+    """
+    def __init__(self, parent, *args, **kwargs):
+
+        Frame.__init__(self, parent, *args, **kwargs)
+        self.parsingbox = ParsingBox(self)
+        self.parsingbox.grid(row=0, column=0)

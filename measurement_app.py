@@ -9,7 +9,7 @@ root = Tk()
 root.wm_title("TextileUX Measurement")
 # width x height + x offset + y offset
 # note for offset: (0,0) is upper left corner of our screen
-root.geometry("1000x600+300+50")
+root.geometry("1200x600+300+50")
 
 notebook = ttk.Notebook(root)
 
@@ -25,13 +25,16 @@ class_info = []
 #
 # this is the filename of the file we want to save the measured data in:
 filename = "SaveFile.txt"
-measurement = MeasurementPage(notebook, buffer, class_info, filename, bg="grey")
+measurement = MeasurementPage(notebook, buffer, class_info, filename, bg="snow3")
 # change the graph title here:
 title = "28 nodes, overall resistance(all parallel) over temperature"
-graph = GraphPage(notebook, buffer, class_info, title, bg="grey")
+graph = GraphPage(notebook, buffer, class_info, title, bg="snow3")
+# here we can parse a file to different formats:
+parsing = ParsingPage(notebook, bg="snow3")
 
 notebook.add(measurement, text="measurement")
 notebook.add(graph, text="graph")
+notebook.add(parsing, text="parsing")
 
 notebook.pack(expand=True, fill="both")
 

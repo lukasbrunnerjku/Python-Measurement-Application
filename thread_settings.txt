@@ -1,0 +1,1 @@
+{"Interval": "1000", "Count": "10", "Number of errors": "1", "Fps": "2"}
