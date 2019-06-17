@@ -9,10 +9,10 @@ The root.mainloop() command will start the Graphical User Interface(=GUI), the s
 is the MeasurementPage where one can select the Instruments used for measuring by clicking
 on the checkboxes and the apply button below. Then there are properties of the measurement and
 port names of Instruments which can be configure(entries left empty -> assume default values).
-# Important
-All configuration must be done before the Instrument initialization, afterwards it has no effect!!!
+
+**All configuration must be done before the Instrument initialization, afterwards it has no effect!!!
 Minimal configuration would be to select an Instrument and apply the selection(all other settings
-assume default values if left empty as I mentioned).
+assume default values if left empty as I mentioned).**
 
 To have an responsive GUI I used threads, one thread for each Instrument selected(I called them 
 MeasurementThreads) and one for updating the screen with the measured Instrument values(called
