@@ -171,7 +171,7 @@ class MeasurementPage(Frame):
         # Instruments on the MeasurementPage:
         # (a list of all instrument classes we want an object from, this must be
         # an empty list at the beginning)
-        assert type(class_info) == list and len(class_info) == 0, "An empty list object excepted!"
+        assert type(class_info) == list and len(class_info) == 0, "An empty list object expected!"
         self.classes = class_info
 
         # the FIFO buffer for exchanging data between the GraphPage and the

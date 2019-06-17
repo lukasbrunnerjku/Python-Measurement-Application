@@ -13,6 +13,12 @@ class Instrument():
     -> the close method
     -> the get_y_label method
     ...or a NotImplementedError is raised if the app will call one of those methods!
+
+    The following is optional:
+    -> the has_port_settings method
+    ...override it only if the Instrument is connected to some sort of a port
+    that is named and it will make sense for the user to change this name
+    e.g. a serial port of an Instrument could be named COM6 on one PC and COM7 on another
     """
     # of cause we want the Instrument to measure something!
     def measure(self) -> float:
@@ -182,8 +188,6 @@ class Keithley2000(Instrument):
     # choose what you want to measure by the corresponding function code:
     # (note: the function code has to match the function code in the get_labels method!)
     def __init__(self, function=0):
-        self.n = 0
-
         # self.gpib will be a obect of: pyvisa.resources.Resource
         # with the open and close method of that resource we can open and close
         # a session!

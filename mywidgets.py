@@ -33,7 +33,12 @@ class Graph():
 
 
 class FancyGraph(Graph):
-
+    """A fancy graph, 3 different colors and markers are used for better visual
+    distinguishability. It is designed for a maximum of 3 y-Axes to preserve
+    readability -> AssertionError is raised if at any point the attempt would
+    be made to create a 4 or more axes graph by selecting 4 or more Instrument
+    classes for example!
+    """
     def __init__(self, frame, buffer, title, x_label, class_info):
         # contains the information what Instruments are selected in the MeasurementPage:
         self.class_info = class_info
@@ -172,6 +177,9 @@ class FancyGraph(Graph):
 
         # in class_info there are all Instrument classes we want to plot measured data from!
         print("Classes used:", self.class_info)
+        # raises an AssertionError if there are more than 3 Instruments selected
+        assert len(class_info) <= 3, "A maximum of 3 axes at once are supported!"
+
         for cls in self.class_info:
             y_label, y_legend_label = cls.get_labels()
             self.y_labels.append(y_label)
