@@ -1,16 +1,39 @@
 # Python-Measurement-Application
+Measure different instruments, log that data in real time on screen and save it automatically to a text file. 
+Plot up to 3 instrument values over time. Set measurement and connection properties or choose which instrument should be
+used within the comfort of a GUI. Same for parsing the measured data to csv format with/without header. 
 
-To see the program in action and get a first glance at it read the overview.pdf!
+A first glance of the program in the following image series:
+![](doc_images/series.png)
+![](doc_images/series.png)
+![](doc_images/series.png)
+![](doc_images/series.png)
+![](doc_images/series.png)
 
 # Requirements
 
-- Python 3 ---> https://www.python.org/
+- Python 3 --> https://www.python.org/
 
 
 ### Python modules
-To install modules I used pip Python 3 (version >= 3.4)
+To install modules I used pip, which is preinstalled when downloading Python 3 (version >= 3.4) from the official
+website(see link above). When searching for python packages(modules) use: https://pypi.org/ (there one can find the
+pip command to install the package and the latest version of the documentation)
+
+- pyserial --> https://pypi.org/project/pyserial/
+- minimalmodbus --> https://pypi.org/project/MinimalModbus/
+- pyvisa --> https://pypi.org/project/PyVISA/
+- matplotlib --> https://pypi.org/project/matplotlib/
 
 ### NI Visa Driver
+With the above Python modules installed we aren't done because the PyVisa module needs a backend to work so we 
+have to install: http://www.ni.com/download/ni-visa-17.5/7220/en/ which basically is a C libary and the PyVisa
+module offers a easy to use Python API for it. For more information read the docs: https://pyvisa.readthedocs.io/en/master/index.html
+
+We are using a GPIB connection for the Keithley2000 instrument so we need the following:
+
+- http://www.ni.com/de-at/support/model.gpib-usb-hs.html
+- http://www.ni.com/de-at/support/downloads/drivers/download.ni-488-2.html#305442
 
 ### Recommended
 The best environment to code some Python in my opinion is the Atom text editor (https://atom.io/) with
