@@ -1,8 +1,25 @@
 # Python-Measurement-Application
 
 To see the program in action and get a first glance at it read the overview.pdf!
+
+# Requirements
+
+- Python 3 ---> https://www.python.org/
+
+
+### Python modules
+To install modules I used pip Python 3 (version >= 3.4)
+
+### NI Visa Driver
+
+### Recommended
+The best environment to code some Python in my opinion is the Atom text editor (https://atom.io/) with
+the following packages installed:
+
+![](doc_images/atom_packages.png)
+
  
-# Quick go through of my code:
+# Quick go through of the code
 The main file of the program is "measurement_app.py", by executing this my measurement program
 starts! In here we create the tab-window structure and add our custom pages to it.
 The root.mainloop() command will start the Graphical User Interface(=GUI), the start page
