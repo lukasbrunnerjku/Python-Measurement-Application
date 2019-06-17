@@ -62,12 +62,14 @@ can be connected to the pc somehow of course). First we install the needed drive
 Next we look up the manual of the Instrument for commands and to know which protocol has to be used for communication.
 It could be: serial, modbus, NI visa,... -> it doesn't matter there should be a python module out there with an easy to 
 use API so the programmer doesn't have to bother with protocol details. Next steps:
+
 - configure the instrument properties first 
 - fetch instrument values 
 - open/close connection to instrument
+
 Then create a Instrument class which has a default constructor(init) which configures the instrument and implement the methods 
 from my abstract Instrument class which basically tells you how an Instrument should look and behave like.
-Test the instrument in the "test_instruments.py" module -> done -> enjoy all features on the new instrument!
+Test the instrument in the "test_instruments.py" module -> done -> enjoy all features on the new instrument :muscle:
 
 I also added a ParsingPage to convert my own format into csv with/without header. To convert a file make sure there is
 only one measurement series(only one header at the beginning) saved in the SaveFile.txt
