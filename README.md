@@ -5,7 +5,7 @@ used within the comfort of a GUI. Same for parsing the measured data to csv form
 
 Get a first glance of the program by watching this youtube video: 
 
-[![Check out my program](https://img.youtube.com/vi/jd4PtYWFyVI/0.jpg)](https://www.youtube.com/watch?v=jd4PtYWFyVI)
+[![Check out my program](https://img.youtube.com/vi/pmviVf1yuoM/0.jpg)](https://www.youtube.com/watch?v=pmviVf1yuoM)
 
 # Requirements
 
