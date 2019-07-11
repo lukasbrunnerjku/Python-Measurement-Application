@@ -150,8 +150,11 @@ class MeasurementThread(threading.Thread):
         print(self, "has stopped!")
 
     def stop(self):
-        print(self, "trying to stopp!")
-        self.run_flag = False
+        if self.count == 0:
+            print(self, "has already finished the work")
+        else:
+            print(self, "trying to stopp!")
+            self.run_flag = False
 
     def wait(self):
         print(self, "will go into idle mode!")

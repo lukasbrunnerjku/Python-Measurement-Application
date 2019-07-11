@@ -1,0 +1,13 @@
+Starting new measurement at 11.July.2019 - 12:39:57
+Time: 0.514, Eurotherm2416: 23.0, FMI220: 0.0, 
+Time: 2.523, Eurotherm2416: 23.2, FMI220: 0.0, 
+Time: 4.537, Eurotherm2416: 22.9, FMI220: 0.0, 
+Time: 6.046, Eurotherm2416: 22.8, FMI220: 0.0, 
+Time: 8.051, Eurotherm2416: 23.0, FMI220: 11.93, 
+Time: 10.054, Eurotherm2416: 22.9, FMI220: 12.53, 
+Time: 12.063, Eurotherm2416: 23.0, FMI220: 12.8, 
+Time: 14.079, Eurotherm2416: 22.9, FMI220: 12.41, 
+Time: 16.082, Eurotherm2416: 22.9, FMI220: 12.67, 
+Time: 18.088, Eurotherm2416: 23.0, FMI220: 12.46, 
+Time: 20.143, Eurotherm2416: 23.1, FMI220: 12.65, 
+Time: 22.113, Eurotherm2416: 23.0, FMI220: 13.29, 

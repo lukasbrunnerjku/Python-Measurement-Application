@@ -27,7 +27,7 @@ class_info = []
 filename = "SaveFile.txt"
 measurement = MeasurementPage(notebook, buffer, class_info, filename, bg="snow3")
 # change the graph title here:
-title = "28 nodes, overall resistance(all parallel) over temperature"
+title = "Fmi220 Force Gauge measurement"
 graph = GraphPage(notebook, buffer, class_info, title, bg="snow3")
 # here we can parse a file to different formats:
 parsing = ParsingPage(notebook, bg="snow3")

@@ -1,1 +1,1 @@
-{"Interval": "1000", "Count": "10", "Number of errors": "1", "Fps": "2"}
+{"Interval": "1", "Count": "10", "Number of errors": "0", "Fps": "2"}

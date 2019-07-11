@@ -9,6 +9,7 @@ from myutils import *
 
 # for the measurement page:
 import multiprocessing
+import threading
 from tkinter import messagebox
 from myinstruments import *
 from mythreads import *
@@ -259,11 +260,20 @@ class MeasurementPage(Frame):
         self.terminal.grid(row=2, column=3, rowspan=2)
         self.scrollbar.config(command=self.terminal.yview)
 
-        self.stop_btn = Button(master=self,
+        # combine the stop button and the thread status label:
+        combine_frame = Frame(master=self)
+        self.stop_btn = Button(master=combine_frame,
                                text="Stop measurement",
                                command=self.stop,
                                state=DISABLED)
-        self.stop_btn.grid(row=4, column=3, sticky=W)
+        self.stop_btn.pack(side="left")
+
+        self.thread_state_label = Label(master=combine_frame,
+                                        text="Shows thread status here",
+                                        bg="black", fg="white")
+        self.thread_state_label.pack(side="left")
+        combine_frame.grid(row=4, column=3, sticky=W)
+
 
         self.port_btn = Button(master=self,
                                text="Open hadware manager under windows",
@@ -346,11 +356,8 @@ class MeasurementPage(Frame):
                     # for an Ni Visa resource with GPIB in it
                     temp = cls()
             except Exception as e:
-                hint = ("Hint: If a resource is blocked press the stop measurement" +
-                " button to free the resource and then go for the initialization again!" +
-                " That's the case if a PermissionError is raised!")
                 messagebox.showerror("Instrument initialization error!",
-                                     "Error message:\n{}\n\n{}".format(e, hint))
+                                     "Error message:\n{}".format(e))
                 # if an Instrument will raise an error here may there are other
                 # Instruments which were successfully created and the connection
                 # established, so in such case we want to enable the stop button
@@ -426,10 +433,14 @@ class MeasurementPage(Frame):
         for thread in self.threads:
             thread.start()
 
+        self.thread_state_label.config(text="Threads are running!",
+                                       bg="green", fg="black")
+
     def measurement(self):
         """This method is used for doing measurements on each button click!
 
         --> here no error routine is used, just restart manually!
+        (this is more or less for testing the setup)
         """
         try:
             # if it's the first time we measured we need a reference time:
@@ -460,9 +471,9 @@ class MeasurementPage(Frame):
     def stop(self):
         """Stops the automated measurement manually and clears the Terminal screen,
         asks if the data shown in the Terminal (which hasn't been plotted yet) will
-        be used for plotting --> if not the clear this "drawing buffer"
+        be used for plotting --> if not then choose: clear "drawing buffer"
 
-        note: No data saved in the files will be deleted of course!
+        note: No saved data of the files will be deleted of course!
         """
         # to ensure it wasn't a missclick:
         answer = messagebox.askquestion("Stop?", "Really want to stop measurement?")
@@ -491,26 +502,7 @@ class MeasurementPage(Frame):
         for thread in self.threads:
             thread.stop()
 
-        # wait till they are really closed (will block GUI meanwhile):
-        for thread in self.threads:
-            # try block so if we didn't started the threads we will get an
-            # error here like: can't join thread which never started
-            try:
-                thread.join()
-            except Exception as e:
-                print(e)
         self.threads_lock.release()
-
-        # let the garbage collector destroy the measurement instrument objects,
-        # since this was the only reference we have to the instruments by now
-        # (MeasurementThreads had references too but the are stopped above,
-        # and so is the UpdateThread) if reference count of an object is 0
-        # the garbage collector will do it's work:
-        self.instruments.clear()
-        # the same applies for the other obects, the memory will be freed again:
-        # (note: no lock necessary since all threads are stopped and joined!)
-        self.fifos.clear()
-        self.threads.clear()
 
         # ask if the data stored in the buffer which sends measurement data to
         # the GraphPage should be cleared:
@@ -519,6 +511,40 @@ class MeasurementPage(Frame):
         if answer == "yes":
             self.buffer.clear_data()
         # if no -> do nothing
+
+        # here we can wait till threads have stopped and meanwhile we aren't
+        # blocking the GUI so we can prepare our settings for the next run
+        def wait_for_thread_join(label):
+            threads_even_started = True
+            self.threads_lock.acquire()
+            # wait till they are really closed
+            for thread in self.threads:
+                # try block so if we didn't started the threads we will get an
+                # error here like: can't join thread which never started
+                try:
+                    thread.join()
+                except Exception as e:
+                    print(e)
+                    threads_even_started = False
+
+            self.threads_lock.release()
+            # change the thread status label accordingly:
+            if threads_even_started:
+                label.config(text="Threads have stopped!",
+                             bg="red", fg="white")
+            else:
+                label.config(text="Shows thread status here",
+                bg="black", fg="white")
+
+        # by running that on a thread we won't block GUI:
+        threading.Thread(target=wait_for_thread_join,
+                         args=(self.thread_state_label,)).start()
+
+        # clear all lists
+        self.instruments.clear()
+        self.fifos.clear()
+        self.threads.clear()
+
         # then enable initialization button again:
         self.init_btn.config(state=NORMAL)
 

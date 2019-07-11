@@ -40,6 +40,15 @@ class FancyGraph(Graph):
     classes for example!
     """
     def __init__(self, frame, buffer, title, x_label, class_info):
+        """
+        Params:
+        frame ... a frame in which we want to have a graph with
+        update and clear functionality
+        buffer ... the fifo buffer from which we get data
+        title ... title of the graph
+        x_label ... label for the x axis
+        class_info ... a list of selected instrument classes
+        """
         # contains the information what Instruments are selected in the MeasurementPage:
         self.class_info = class_info
         # a frame in which we want to have a graph with
@@ -178,12 +187,53 @@ class FancyGraph(Graph):
         # in class_info there are all Instrument classes we want to plot measured data from!
         print("Classes used:", self.class_info)
         # raises an AssertionError if there are more than 3 Instruments selected
-        assert len(class_info) <= 3, "A maximum of 3 axes at once are supported!"
+        assert len(self.class_info) <= 3, "A maximum of 3 axes are supported!"
 
         for cls in self.class_info:
             y_label, y_legend_label = cls.get_labels()
             self.y_labels.append(y_label)
             self.y_legend_labels.append(y_legend_label)
+
+
+class StopAndStatus(Frame):
+    """A stop button with a status label combined, it starts always in the
+    stopped state!
+    """
+    def __init__(self, stop_func, stop_label, run_format, stop_format, *args, **kwargs):
+        """
+        Params:
+        stop_func ... the function which should be invoe by the stop_btn
+        stop_label ... text for the stop button
+        run_format ... a tuple (text, bg color, fg color) shown in run state
+        stop_format ... a tuple (text, bg color, fg color) shown in stop state
+        """
+        Frame.__init__(self, *args, **kwargs)
+        self.stop_func = stop_func
+        self.stop_btn = Button(master=self,
+                               text=stop_label,
+                               command=self.stop,
+                               state=DISABLED)
+        self.state_label = Label(master=self,
+                                 text=stop_format[0],
+                                 bg=stop_format[1],
+                                 fg=stop_format[2])
+
+    def stop(self, stop_func):
+        self.state_label.config(text=run_format[0],
+                                bg=run_format[1],
+                                fg=run_format[2])
+
+    def _packChildren(self):
+        self.stop_btn.pack(side=LEFT)
+        self.state_label.pack(side=LEFT)
+
+    def pack(self):
+        self._packChildren()
+        Frame.pack(self, *args, **kwargs)
+
+    def grid(self):
+        self._packChildren()
+        Frame.grid(self, *args, **kwargs)
 
 
 class Container():
@@ -224,6 +274,10 @@ class Checkbuttons(Frame):
     in the myinstruments module
     """
     def __init__(self, parent, classes, *args, **kwargs):
+        """
+        Params:
+        classes ... a list of all the classes we want to choose from
+        """
         Frame.__init__(self, parent, *args, **kwargs)
         self.classes = classes
         self.vars = []
@@ -275,7 +329,11 @@ class SettingsBox(Frame):
     the value of the entry is the dictionary's value!
     """
     def __init__(self, parent, labels, info, *args, **kwargs):
-
+        """
+        Params:
+        labels ... labels for the setting entries
+        info ... name of the settings e.g. "Port Settings"
+        """
         Frame.__init__(self, parent, *args, **kwargs)
         self._settings = None
         self._path = None
@@ -423,7 +481,10 @@ class PreviewBox(Frame):
         to load the images
         """
         def __init__(self, parent, selected, *args, **kwargs):
-
+            """
+            Params:
+            selected ... IntVar to save last pressed button selection code
+            """
             Frame.__init__(self, parent, *args, **kwargs)
             self.image = None
             # IntVar to save last pressed button selection code:
@@ -489,7 +550,6 @@ class ParsingBox(Frame):
     selected output format using my PreviewBox class!
     """
     def __init__(self, parent, *args, **kwargs):
-
         Frame.__init__(self, parent, *args, **kwargs)
         # IntVar to save last pressed button selection code of PreviewBox:
         self.selected = IntVar()
