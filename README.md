@@ -3,12 +3,9 @@ Measure different instruments, log that data in real time on screen and save it 
 Plot up to 3 instrument values over time. Set measurement and connection properties or choose which instrument should be
 used within the comfort of a GUI. Same for parsing the measured data to csv format with/without header. 
 
-A first glance of the program in the following image series:
-![](doc_images/series.png)
-![](doc_images/series.png)
-![](doc_images/series.png)
-![](doc_images/series.png)
-![](doc_images/series.png)
+Get a first glance of the program by watching this youtube video: 
+
+[![Check out my program](https://img.youtube.com/vi/jd4PtYWFyVI/0.jpg)](https://www.youtube.com/watch?v=jd4PtYWFyVI)
 
 # Requirements
 
@@ -24,6 +21,7 @@ pip command to install the package and the latest version of the documentation)
 - minimalmodbus --> https://pypi.org/project/MinimalModbus/
 - pyvisa --> https://pypi.org/project/PyVISA/
 - matplotlib --> https://pypi.org/project/matplotlib/
+- pillow --> https://pypi.org/project/Pillow/
 
 ### NI Visa Driver
 With the above Python modules installed we aren't done because the PyVisa module needs a backend to work so we 
@@ -34,6 +32,18 @@ We are using a GPIB connection for the Keithley2000 instrument so we need the fo
 
 - http://www.ni.com/de-at/support/model.gpib-usb-hs.html
 - http://www.ni.com/de-at/support/downloads/drivers/download.ni-488-2.html#305442
+
+### Serial to USB converter
+Some Instruments like the Fmi220 are using an old RS232 interfacefor which we need an serial to usb converter.
+If we plug in the instrument with the converter windows should recognize that in the hardware manager: 
+
+![](doc_images/driver_serial_converter.png)
+
+Open the settings by double clicking and press "update driver" and windows should find an install it by itself. After that
+we should see in the hardware manager under the tab "connection" that there is a port accessible. Later in the program we 
+can comfortably look that up with a button click and set the port settings for Fmi220 to COM3(can differ on your machine). 
+
+![](doc_images/successful_driver_installation.png)
 
 ### Recommended
 The best environment to code some Python in my opinion is the Atom text editor (https://atom.io/) with
@@ -52,7 +62,7 @@ port names of Instruments which can be configure(entries left empty = assume def
 
 **All configuration must be done before the Instrument initialization, afterwards it has no effect!!!
 Minimal configuration would be to select an Instrument and apply the selection(all other settings
-assume default values if left empty as I mentioned).**
+assume default values if left empty).**
 
 To have an responsive GUI I used threads, one thread for each Instrument selected(I called them 
 MeasurementThreads) and one for updating the screen with the measured Instrument values(called
