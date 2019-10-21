@@ -202,7 +202,7 @@ class StopAndStatus(Frame):
     def __init__(self, stop_func, stop_label, run_format, stop_format, *args, **kwargs):
         """
         Params:
-        stop_func ... the function which should be invoe by the stop_btn
+        stop_func ... the function which should be invoked by the stop_btn
         stop_label ... text for the stop button
         run_format ... a tuple (text, bg color, fg color) shown in run state
         stop_format ... a tuple (text, bg color, fg color) shown in stop state
@@ -256,7 +256,10 @@ class Terminal(Text, Container):
     def __init__(self, parent, filename, *args, **kwargs):
         Text.__init__(self, parent, *args, **kwargs)
         # filename in which the measured data will be safed:
-        self.filename = filename
+        if filename == None:
+            self.filename = time.strftime("%Y%m%d_%H%M%S.txt", time.localtime())
+        else:
+            self.filename = filename
 
     def update(self, msg):
         # save msg to file (append data if file already filled with content,
@@ -513,11 +516,18 @@ class PreviewBox(Frame):
                                             command=lambda: self.show_image("csv_wo_header.png", 1))
             self.csv_wo_header_btn.grid(row=1, column=1, sticky="ew")
             self.buttons.append(self.csv_wo_header_btn)
+
             self.csv_w_header_btn = Button(self,
                                            text="CSV with header",
                                            command=lambda: self.show_image("csv_w_header.png", 2))
             self.csv_w_header_btn.grid(row=1, column=2, sticky="ew")
             self.buttons.append(self.csv_w_header_btn)
+
+            self.tsv_w_header_btn = Button(self,
+                                           text="TSV with header",
+                                           command=lambda: self.show_image("tsv_w_header.png", 3))
+            self.tsv_w_header_btn.grid(row=1, column=3, sticky="ew")
+            self.buttons.append(self.tsv_w_header_btn)
 
             # default view of the PreviewBox:
             self.show_image("my_format.png", 0)
@@ -535,6 +545,8 @@ class PreviewBox(Frame):
                 self.csv_wo_header_btn.config(bg=self.selection_bg_color)
             elif selection == 2:
                 self.csv_w_header_btn.config(bg=self.selection_bg_color)
+            elif selection == 3:
+                self.tsv_w_header_btn.config(bg=self.selection_bg_color)
             # get the image in a format tkinter can handle it:
             self.image = ImageTk.PhotoImage(PIL.Image.open(image))
             # resize the canvas to be as large as the image:
@@ -586,7 +598,10 @@ class ParsingBox(Frame):
             copy_file(in_filename, out_filename)
         # parse as CSV without header:
         elif self.selected.get() == 1:
-            file_to_csv(in_filename, out_filename, header=False)
+            file_to_sv(in_filename, out_filename, header=False)
         # parse as CSV with header:
         elif self.selected.get() == 2:
-            file_to_csv(in_filename, out_filename, header=True)
+            file_to_sv(in_filename, out_filename, header=True)
+        # parse as TSV with header:
+        elif self.selected.get() == 3:
+            file_to_sv(in_filename, out_filename, header=True, separator="\t")

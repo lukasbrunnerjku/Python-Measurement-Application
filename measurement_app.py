@@ -24,7 +24,10 @@ class_info = []
 # --- create custom pages ---
 #
 # this is the filename of the file we want to save the measured data in:
-filename = "SaveFile.txt"
+# filename = "SaveFile.txt" -> then everything is saved into one file
+# if filename is None for each measurement a filename is automatically
+# generated with the actual timestamp from year to second information
+filename = None
 measurement = MeasurementPage(notebook, buffer, class_info, filename, bg="snow3")
 # change the graph title here:
 title = "Fmi220 Force Gauge measurement"

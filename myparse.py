@@ -1,6 +1,6 @@
 # --- parse a measurement file ---
 
-def file_to_csv_lines(filename, header=True):
+def file_to_sv_lines(filename, header=True, separator=","):
     """Takes a filename as argument and yield it's lines
     in csv style with/without header!
     optional argument: header=True (default) or header=False
@@ -40,17 +40,17 @@ def file_to_csv_lines(filename, header=True):
                     parsed_line += entry.split(" ")[1]
                     is_first_entry = False
                 else:
-                    parsed_line += "," + entry.split(" ")[2]
+                    parsed_line += separator + entry.split(" ")[2]
             # yield all the other lines for the parsed file
             yield parsed_line
 
-def file_to_csv(in_filename, out_filename, **kwargs):
+def file_to_sv(in_filename, out_filename, **kwargs):
     """Takes a measurement data filename and the filename the parsed file
     should have... optional parameter: header=True/False as keyword argument!
     """
     with open(out_filename, "w+") as file:
         # for further information on yield see: python generator
-        for parsed_line in file_to_csv_lines(in_filename, **kwargs):
+        for parsed_line in file_to_sv_lines(in_filename, **kwargs):
             file.write(parsed_line + "\n")
 
 def copy_file(in_filename, out_filename):
@@ -64,7 +64,8 @@ def copy_file(in_filename, out_filename):
     out_file.close()
 
 if __name__ == '__main__':
-    out_filename = "ParsedFileAsCSV2.txt"
-    in_filename = "SaveFileDataSet.txt"
+    out_filename = "data.txt"
+    in_filename = "SaveFile.txt"
     # parse a file and save that in an other file:
-    file_to_csv(in_filename, out_filename, header=False)
+    #file_to_sv(in_filename, out_filename, header=True, separator=",")
+    file_to_sv(in_filename, out_filename, header=True, separator="\t")
