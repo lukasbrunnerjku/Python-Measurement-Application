@@ -285,7 +285,7 @@ class MeasurementPage(Frame):
         self.terminal_label = Label(self, text="Measurement terminal")
         self.terminal_label.grid(row=1, column=3, sticky=N+E+S+W)
 
-    def init_measurement(self, interval=15, count=11520, noe=3, fps=2):
+    def init_measurement(self, interval=1, count=100000, noe=3, fps=10):
         """Parameters: doing <count> measurements every <interval> seconds
         noe ... number of errors that can occur before the error_routine is started
         fps ... frames per second we want the screen to try to update with new values
@@ -422,6 +422,8 @@ class MeasurementPage(Frame):
         --> on such measurement the error routine will get called if the
         Instrument still can't measure successfully after multiple tries!
         """
+        # for each automated measurement  a new filename with the current timestamp is made:
+        self.terminal.set_filename = time.strftime("%Y%m%d_%H%M%S.txt", time.localtime())
         # we don't want manualy measured data while doing atomatic measurements:
         self.measurement_btn.config(state=DISABLED)
         # and force the user to not press buttons when it makes no sense:
@@ -446,8 +448,13 @@ class MeasurementPage(Frame):
             # if it's the first time we measured we need a reference time:
             if self.start_time == None:
                 self.start_time = time.time()
+                # for each manual measurement series a new filename with the current timestamp is made:
+                self.terminal.set_filename = time.strftime("%Y%m%d_%H%M%S.txt", time.localtime())
                 # and we create a header for the new measurement with time info:
                 self.terminal.update(self.terminal.create_header())
+                # and force the user to not press buttons when it makes no sense:
+                self.auto_measure_btn.config(state=DISABLED)
+                self.apply_btn.config(state=DISABLED)
 
             # we need to send the measured data to the GraphPage as a bundle:
             bundle = []

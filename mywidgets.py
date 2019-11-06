@@ -261,6 +261,9 @@ class Terminal(Text, Container):
         else:
             self.filename = filename
 
+    def set_filename(filename):
+        self.filename = filename
+
     def update(self, msg):
         # save msg to file (append data if file already filled with content,
         # or create file if no file with that name exists)
