@@ -47,6 +47,55 @@ class Instrument():
 
 # --- custom instruments ---
 
+class LightSwitch(Instrument):
+    """
+    The light switch is conncted to a Arduino. The command "R\n"
+    sent will lead to the Arduino responding with 1 or 0 (ON or OFF).
+    """
+
+    def __init__(self, port=None, baudrate=9600, timeout=0.5):
+        if port == None:
+            port = "COM7"
+        self.serial = serial.Serial(port=port,
+                                    baudrate=baudrate,
+                                    timeout=timeout,
+                                    bytesize=serial.EIGHTBITS,
+                                    parity=serial.PARITY_NONE,
+                                    stopbits=serial.STOPBITS_ONE)
+        print(f"{self.__class__.__name__} has been successfully initialized!\n{self.serial}")
+
+    def has_port_settings():
+        return True
+
+    def open(self):
+        print("Opening connection of:", self.__class__.__name__, "again...")
+        self.serial.open()
+        if self.serial.is_open:
+            print("Connection of instrument:", self.__class__.__name__, " has been opened!")
+        else:
+            raise IOError("Failed to open connection of instrument:", self.__class__.__name__)
+
+    def close(self):
+        print("Closing connection of:", self.__class__.__name__)
+        self.serial.close()
+        if not self.serial.is_open:
+            print("Connection of instrument:", self.__class__.__name__, " has been closed!")
+        else:
+            raise IOError("Failed to close connection of instrument:", self.__class__.__name__)
+
+    def measure(self):
+        self.serial.write(("R\n").encode("ascii"))
+        # wait till all data is written:
+        self.serial.flush()
+        msg = self.serial.readline().decode("ascii")
+        print(f"{self.__class__.__name__}: {msg}")
+        return float(msg)
+
+
+    def get_labels() -> str:
+        # the first is for the axis label, the second for the legend label:
+        return ("Sensor ON/OFF (1/0)", "Light Sensor")
+
 class Eurotherm2416(minimalmodbus.Instrument, Instrument):
 
     def __init__(self, port=None, baudrate=9600):
