@@ -10,7 +10,8 @@ import random
 
 # this is for the event handling e.g. of an error event in the MeasurementThread:
 from myevent import Event
-
+# for deque:
+import collections
 
 
 class Fifo:
@@ -20,8 +21,8 @@ class Fifo:
     with Lock.acquire() and Lock.release() used internally we ensure that only
     one thread at a time can access the fifo buffer -> no data corruption possible
     """
-    def __init__(self):
-        self.data = []
+    def __init__(self, maxlen=None):
+        self.data = collections.deque(maxlen=maxlen)
         # self.lock = threading.Lock()
         # the above code is for pure thread use only, with processes we need:
         # (nothing else changes due to the same interface of both Lock implementations)
@@ -58,10 +59,13 @@ class Fifo:
         self.synchronized_access(self._push, data)
 
     def _pop(self):
-        return self.data.pop(0)
+        return self.data.pop()
 
     def pop(self) -> object:
         return self.synchronized_access(self._pop)
+
+    def __repr__(self):
+        return f"{self.data}"
 
 
 class MeasurementThread(threading.Thread):
@@ -261,3 +265,14 @@ class UpdateThread(threading.Thread):
 
     def __repr__(self):
         return "UpdateThread with id: {}".format(id(self))
+
+
+if __name__ == "__main__":
+    buffer = Fifo(maxlen=5)
+    for i in range(10):
+        buffer.push(i)
+        print(buffer)
+    buffer.pop()
+    print(buffer)
+    buffer.clear_data()
+    print(buffer)

@@ -15,8 +15,9 @@ notebook = ttk.Notebook(root)
 
 # we need to get data from the MeasurementPage to the GraphPage,
 # and therefore we use the Fifo class which implements synchronized
-# data access(needed when working with threads):
-buffer = Fifo()
+# data access(needed when working with threads), the Fifo uses a deque
+# in the background, last "maxlen" elements are saved for plotting:
+buffer = Fifo(maxlen=1000)
 
 # for sending information of selected Instruments to the GraphPage:
 class_info = []
