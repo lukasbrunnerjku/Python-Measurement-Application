@@ -243,8 +243,11 @@ class Container():
     def update(self, msg):
         raise NotImplementedError("No method: update() implemented on", self.__class__.__name__)
 
-    def create_header(self) -> str:
-        ftime = time.strftime("%d.%B.%Y - %H:%M:%S", time.localtime())
+    def new_measurement_init(self) -> str:
+        """creates timesttamp for filename and returns header in formatted time"""
+        local_time = time.localtime()
+        ftime = time.strftime("%d.%B.%Y - %H:%M:%S", local_time)
+        self.filename = time.strftime("%Y%m%d_%H%M%S.txt", local_time)
         return "Starting new measurement at {}".format(ftime)
 
 
@@ -253,16 +256,8 @@ class Terminal(Text, Container):
     from the abstract class Container which is the interface we
     need to pass an object as a container to the UpdateThread!
     """
-    def __init__(self, parent, filename, *args, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         Text.__init__(self, parent, *args, **kwargs)
-        # filename in which the measured data will be safed:
-        if filename == None:
-            self.filename = time.strftime("%Y%m%d_%H%M%S.txt", time.localtime())
-        else:
-            self.filename = filename
-
-    def set_filename(filename):
-        self.filename = filename
 
     def update(self, msg):
         # save msg to file (append data if file already filled with content,

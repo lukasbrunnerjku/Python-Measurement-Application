@@ -15,6 +15,7 @@ from myinstruments import *
 from mythreads import *
 # for retrieving all the classes of the myinstruments module:
 import sys, inspect
+import time
 
 
 class GraphPage(Frame):
@@ -161,10 +162,8 @@ class MeasurementPage(Frame):
         print("Error handled, normal mode of operation restored!")
 
 
-    def __init__(self, parent, buffer, class_info, filename, *args, **kwargs):
-        """The filename is used to create an file for data saving or
-        if such file does exist it appends any new data to it!
-        The buffer and class_info is used for communication between the
+    def __init__(self, parent, buffer, class_info, *args, **kwargs):
+        """The buffer and class_info is used for communication between the
         MeasurementPage and the GraphPage!
         """
         Frame.__init__(self, parent, *args, **kwargs)
@@ -254,7 +253,6 @@ class MeasurementPage(Frame):
         self.scrollbar.grid(row=2, column=4, rowspan=2, sticky=N+S)
 
         self.terminal = Terminal(self,
-                                 filename,
                                  yscrollcommand=self.scrollbar.set,
                                  width=80)
         self.terminal.grid(row=2, column=3, rowspan=2)
@@ -422,8 +420,7 @@ class MeasurementPage(Frame):
         --> on such measurement the error routine will get called if the
         Instrument still can't measure successfully after multiple tries!
         """
-        # for each automated measurement  a new filename with the current timestamp is made:
-        self.terminal.set_filename = time.strftime("%Y%m%d_%H%M%S.txt", time.localtime())
+
         # we don't want manualy measured data while doing atomatic measurements:
         self.measurement_btn.config(state=DISABLED)
         # and force the user to not press buttons when it makes no sense:
@@ -448,10 +445,8 @@ class MeasurementPage(Frame):
             # if it's the first time we measured we need a reference time:
             if self.start_time == None:
                 self.start_time = time.time()
-                # for each manual measurement series a new filename with the current timestamp is made:
-                self.terminal.set_filename = time.strftime("%Y%m%d_%H%M%S.txt", time.localtime())
                 # and we create a header for the new measurement with time info:
-                self.terminal.update(self.terminal.create_header())
+                self.terminal.update(self.terminal.new_measurement_init())
                 # and force the user to not press buttons when it makes no sense:
                 self.auto_measure_btn.config(state=DISABLED)
                 self.apply_btn.config(state=DISABLED)

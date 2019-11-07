@@ -22,15 +22,9 @@ buffer = Fifo()
 class_info = []
 
 # --- create custom pages ---
-#
-# this is the filename of the file we want to save the measured data in:
-# filename = "SaveFile.txt" -> then everything is saved into one file
-# if filename is None for each measurement a filename is automatically
-# generated with the actual timestamp from year to second information
-filename = None
-measurement = MeasurementPage(notebook, buffer, class_info, filename, bg="snow3")
+measurement = MeasurementPage(notebook, buffer, class_info, bg="snow3")
 # change the graph title here:
-title = "Fmi220 Force Gauge measurement"
+title = "Measurement Plot"
 graph = GraphPage(notebook, buffer, class_info, title, bg="snow3")
 # here we can parse a file to different formats:
 parsing = ParsingPage(notebook, bg="snow3")

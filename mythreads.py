@@ -193,7 +193,7 @@ class UpdateThread(threading.Thread):
         #  we need a reference time:
         self.start_time = time.time()
         # update the container with the header message:
-        self.container.update(self.container.create_header())
+        self.container.update(self.container.new_measurement_init())
 
         while self.run_flag:
             start = time.time()
